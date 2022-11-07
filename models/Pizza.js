@@ -1,4 +1,5 @@
 const { Schema, model } = require('mongoose');
+const dateFormat = require('../utils/dateFormat');
 
 // not necessary to import special datatypes because the data will adhere to built-in javascript datatypes
 const PizzaSchema = new Schema({
@@ -10,14 +11,34 @@ const PizzaSchema = new Schema({
     },
     createdAt: {
       type: Date,
-      default: Date.now // will add current time if no data is added
+      default: Date.now, // will add current time if no data is added
+      get: (createdAtVal) => dateFormat(createdAtVal)
     },
     size: {
       type: String,
       default: 'Large'
     },
-    toppings: [] // indicates 'Array' as the data type, could also use the word 'Array'
-  });
+    toppings: [], // set as an empty array
+    comments: [
+      {
+        type: Schema.Types.ObjectId, // expect an object id
+        ref: 'Comment' // data comes from Comment model
+      }
+    ]
+  },
+  {
+    toJSON: {
+      virtuals: true,
+      getters: true
+    },
+    id: false // virtual that Mongoose returns and we don't need
+  }
+);
+
+// get total count of comments and replies on retrieval
+PizzaSchema.virtual('commentCount').get(function() {
+  return this.comments.length;
+});
 
 // create the Pizza model using the PizzaSchema
   const Pizza = model ('Pizza', PizzaSchema);
